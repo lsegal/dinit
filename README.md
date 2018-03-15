@@ -1,5 +1,7 @@
 # DInit
 
+[![GoDoc](https://godoc.org/github.com/lsegal/dinit?status.svg)](https://godoc.org/github.com/lsegal/dinit)
+
 DInit is a library to initialize structs using Dependenci Injection (DI).
 
 ## Installation
