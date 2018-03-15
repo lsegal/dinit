@@ -89,7 +89,7 @@ func TestInit_Error(t *testing.T) {
 func TestInit_Cycle(t *testing.T) {
 	out = []string{}
 	err := dinit.Init(newE, newF)
-	assert.EqualError(t, err, "cycle detected in func(didi_test.f, didi_test.f) didi_test.e")
+	assert.EqualError(t, err, "cycle detected in func(dinit_test.f, dinit_test.f) dinit_test.e")
 	assert.Equal(t, []string{}, out)
 }
 
