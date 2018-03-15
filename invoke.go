@@ -5,6 +5,8 @@ import (
 	"reflect"
 )
 
+// invoke calls all provider functions in the best order possible, using the
+// generated output values as inputs to dependent providers.
 func (r *resolver) invoke() error {
 	callmap := map[reflect.Value]bool{}
 	for _, fn := range r.fns {
@@ -18,6 +20,10 @@ func (r *resolver) invoke() error {
 	return nil
 }
 
+// callfn calls a provider function with the correct input arguments matched
+// against the current set of resolved values. If a function requires an input
+// value that has not yet been generated, callfn will look up the provider
+// function for that type and generate the value recursively.
 func (r *resolver) callfn(fn reflect.Value, callmap map[reflect.Value]bool) error {
 	callmap[fn] = true
 	t := fn.Type()

@@ -2,9 +2,10 @@ package dinit_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
-	"github.com/lsegal/didi"
+	"github.com/lsegal/dinit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -73,21 +74,44 @@ func newF(e e) f {
 
 func TestInit(t *testing.T) {
 	out = []string{}
-	err := didi.Init(newA, newB, newC, d{"test"})
+	err := dinit.Init(newA, newB, newC, d{"test"})
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"INIT C", "INIT B: test", "INIT A"}, out)
 }
 
 func TestInit_Error(t *testing.T) {
 	out = []string{}
-	err := didi.Init(newB, c{""}, d{"test"})
+	err := dinit.Init(newB, c{""}, d{"test"})
 	assert.EqualError(t, err, "invalid argument")
 	assert.Equal(t, []string{}, out)
 }
 
 func TestInit_Cycle(t *testing.T) {
 	out = []string{}
-	err := didi.Init(newE, newF)
+	err := dinit.Init(newE, newF)
 	assert.EqualError(t, err, "cycle detected in func(didi_test.f, didi_test.f) didi_test.e")
 	assert.Equal(t, []string{}, out)
+}
+
+func ExampleInit() {
+	type C struct{ Value string }
+	type B struct{ *C }
+	type A struct {
+		*B
+		*C
+	}
+
+	// Standard Go-style New* initializer functions
+	NewA := func(b *B, c *C) *A { return &A{b, c} }
+	NewB := func(c *C) *B { return &B{c} }
+
+	// Use this one to inspect our produced A value
+	finalizer := func(a *A) { fmt.Println(a.C.Value, a.B.C.Value) }
+
+	// Pass in a static value for C so we can control the string Value.
+	// DInit is smart enough to use the B value produced by NewB as an argument
+	// to NewA.
+	dinit.Init(finalizer, NewA, NewB, &C{"Winner"})
+
+	// Output: Winner Winner
 }

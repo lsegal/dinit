@@ -17,6 +17,8 @@ type resolver struct {
 	fns []reflect.Value
 }
 
+// init initializes the valmap and fns list. Concrete values are separated from
+// provider functions and will be used later during invoke().
 func (r *resolver) init(vals []interface{}) error {
 	r.valmap = map[string]reflect.Value{}
 	for _, val := range vals {
@@ -33,11 +35,15 @@ func (r *resolver) init(vals []interface{}) error {
 	return nil
 }
 
+// resolve inspects the list of concrete values and provider functions to
+// determine the dependency map of the initialization.
 func (r *resolver) resolve() error {
 	r.buildTypeMap()
 	return r.fillValMap()
 }
 
+// buildTypeMap collects all known type names from all concrete values, as well
+// as input and output function argument types.
 func (r *resolver) buildTypeMap() {
 	r.typmap = map[string]reflect.Type{}
 	for _, fn := range r.fns {
@@ -54,6 +60,7 @@ func (r *resolver) buildTypeMap() {
 	}
 }
 
+// addType adds a type to the known types list.
 func (r *resolver) addType(t reflect.Type) {
 	t = elemof(t)
 	if t.Kind() == reflect.Interface {
@@ -64,6 +71,8 @@ func (r *resolver) addType(t reflect.Type) {
 	}
 }
 
+// fillValMap fills the valmap with the remaining provider functions for the
+// matching types.
 func (r *resolver) fillValMap() error {
 	for _, fn := range r.fns {
 		fnt := fn.Type()
@@ -85,6 +94,11 @@ func (r *resolver) fillValMap() error {
 	return nil
 }
 
+// concrete determines the concrete name of a type. In other words, if the type
+// is an interface, it determines the closest matching known concrete type
+// that implements said interface. When a match is found, the return value of
+// this function will always be a struct value (not pointer) for consistency. If
+// no match is found, this function returns nil.
 func (r *resolver) concrete(t reflect.Type) reflect.Type {
 	t = elemof(t)
 	name := nameof(t)
