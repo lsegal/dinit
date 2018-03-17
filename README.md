@@ -2,6 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/lsegal/dinit?status.svg)](https://godoc.org/github.com/lsegal/dinit)
 [![Build Status](https://travis-ci.org/lsegal/dinit.svg?branch=master)](https://travis-ci.org/lsegal/dinit)
+[![Coverage Status](https://coveralls.io/repos/github/lsegal/dinit/badge.svg?branch=master)](https://coveralls.io/github/lsegal/dinit?branch=master)
 
 DInit is a library to initialize structs using Dependenci Injection (DI).
 
