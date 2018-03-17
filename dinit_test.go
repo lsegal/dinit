@@ -82,6 +82,21 @@ func TestInit(t *testing.T) {
 func TestInit_InvalidArgs(t *testing.T) {
 	assert.EqualError(t, dinit.Init(1), "unsupported provider type: 1")
 	assert.EqualError(t, dinit.Init("x"), "unsupported provider type: x")
+	assert.EqualError(t, dinit.Init(nil), "unsupported provider type: <nil>")
+}
+
+func TestInit_IgnoreArgs(t *testing.T) {
+	var out []string
+	type unimplementer interface {
+		Unimplemented()
+	}
+	type val struct{}
+	prod := func() (val, int, unimplementer, error) {
+		out = append(out, "prod")
+		return val{}, 0, nil, nil
+	}
+	assert.NoError(t, dinit.Init(prod, val{}))
+	assert.Equal(t, []string{"prod"}, out)
 }
 
 func TestInit_Error(t *testing.T) {
