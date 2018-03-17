@@ -34,14 +34,11 @@ func (r *resolver) callfn(fn reflect.Value, callmap map[reflect.Value]bool) erro
 		var val reflect.Value
 		var ok bool
 		var name string
-		var err error
 		for {
 			// check to see if we already have a value for this input type and use it
-			// if we do
-			val, ok, name, err = r.provide(t.In(i))
-			if err != nil {
-				return err
-			}
+			// if we do. ignore err here because after validate() this can no longer
+			// return an error.
+			val, ok, name, _ = r.provide(t.In(i))
 			if ok && val.IsValid() && val.Kind() != reflect.Func {
 				break
 			}
@@ -84,11 +81,9 @@ func (r *resolver) callfn(fn reflect.Value, callmap map[reflect.Value]bool) erro
 		if c == nil {
 			continue
 		}
-		name := nameof(c)
-		if name == "" {
-			continue
+		if name := nameof(c); name != "" {
+			r.valmap[name] = out
 		}
-		r.valmap[name] = out
 	}
 	return nil
 }

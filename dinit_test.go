@@ -83,6 +83,9 @@ func TestInit_InvalidArgs(t *testing.T) {
 	assert.EqualError(t, dinit.Init(1), "unsupported provider type: 1")
 	assert.EqualError(t, dinit.Init("x"), "unsupported provider type: x")
 	assert.EqualError(t, dinit.Init(nil), "unsupported provider type: <nil>")
+
+	var f func()
+	assert.EqualError(t, dinit.Init(f), "nil function func()")
 }
 
 func TestInit_IgnoreArgs(t *testing.T) {
@@ -91,19 +94,39 @@ func TestInit_IgnoreArgs(t *testing.T) {
 		Unimplemented()
 	}
 	type val struct{}
-	prod := func() (val, int, unimplementer, error) {
-		out = append(out, "prod")
+	provide := func() (val, int, unimplementer, error) {
+		out = append(out, "provide")
 		return val{}, 0, nil, nil
 	}
-	assert.NoError(t, dinit.Init(prod, val{}))
-	assert.Equal(t, []string{"prod"}, out)
+	assert.NoError(t, dinit.Init(provide, val{}))
+	assert.Equal(t, []string{"provide"}, out)
 }
 
-func TestInit_Error(t *testing.T) {
+func TestInit_InvalidInputs(t *testing.T) {
+	type unimplementer interface {
+		Unimplemented()
+	}
+	provide := func(u unimplementer) {}
+	assert.EqualError(t, dinit.Init(provide), "no injectable value for type dinit_test.unimplementer")
+
+	type x struct{}
+	type y struct{}
+	newX := func(y y) x { return x{} }
+	newY := func() {}
+	assert.EqualError(t, dinit.Init(newX, newY), "missing provider object for github.com/lsegal/dinit_test.y")
+}
+
+func TestInit_ProviderFnError(t *testing.T) {
 	out = []string{}
 	err := dinit.Init(newB, c{""}, d{"test"})
 	assert.EqualError(t, err, "invalid argument")
 	assert.Equal(t, []string{}, out)
+
+	type x struct{}
+	type y struct{}
+	newX := func(y y) x { return x{} }
+	newY := func() (y, error) { return y{}, errors.New("nope") }
+	assert.EqualError(t, dinit.Init(newX, newY), "nope")
 }
 
 func TestInit_Cycle(t *testing.T) {

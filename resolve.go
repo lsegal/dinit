@@ -81,14 +81,12 @@ func (r *resolver) fillValMap() {
 			if c == nil {
 				continue
 			}
-			name := nameof(c)
-			if name == "" {
-				continue
+			if name := nameof(c); name != "" {
+				if _, ok := r.valmap[name]; ok {
+					continue // skip if we already have a value
+				}
+				r.valmap[name] = fn
 			}
-			if _, ok := r.valmap[name]; ok {
-				continue // skip if we already have a value
-			}
-			r.valmap[name] = fn
 		}
 	}
 }
@@ -125,22 +123,19 @@ func (r *resolver) provide(t reflect.Type) (v reflect.Value, ok bool, name strin
 		err = fmt.Errorf("no injectable value for type %v", t)
 		return
 	}
-	name = nameof(c)
-	if name == "" {
-		err = fmt.Errorf("unknown type %v", t)
-		return
+	if name = nameof(c); name != "" {
+		v, ok = r.valmap[name]
 	}
-	v, ok = r.valmap[name]
 	return
 }
 
 // validate checks to see if any provider functions will create a call cycle
 // when trying to initialize objects or if any arguments are unknown.
 func (r *resolver) validate(fn reflect.Value, m map[reflect.Value]int) error {
-	if !fn.IsValid() {
-		return nil
-	}
 	fnt := fn.Type()
+	if fn.IsNil() {
+		return fmt.Errorf("nil function %+v", fnt)
+	}
 
 	if m == nil {
 		m = map[reflect.Value]int{}
