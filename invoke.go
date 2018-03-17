@@ -36,6 +36,8 @@ func (r *resolver) callfn(fn reflect.Value, callmap map[reflect.Value]bool) erro
 		var name string
 		var err error
 		for {
+			// check to see if we already have a value for this input type and use it
+			// if we do
 			val, ok, name, err = r.provide(t.In(i))
 			if err != nil {
 				return err
@@ -46,14 +48,22 @@ func (r *resolver) callfn(fn reflect.Value, callmap map[reflect.Value]bool) erro
 			if val.Kind() != reflect.Func {
 				return fmt.Errorf("missing provider object for %v", name)
 			}
+			// call the provider function for this input argument, since it has not
+			// yet been resolved.
 			if err := r.callfn(val, callmap); err != nil {
 				return err
 			}
 		}
 
+		// Either the argument is a struct and we have a pointer, or the argument
+		// is a pointer and we have a struct, so we need to normalize our val.
 		if val.Kind() == reflect.Ptr && t.In(i).Kind() == reflect.Struct {
+			// turn a pointer into a struct value by dereferencing
 			val = val.Elem()
 		} else if val.Kind() == reflect.Struct && t.In(i).Kind() == reflect.Ptr {
+			// to get a pointer from a struct value, we need to allocate a new pointer
+			// object and set the struct as the address of the pointer. We do that
+			// with this little bit of reflection magic:
 			v := reflect.New(val.Type())
 			v.Elem().Set(val)
 			val = v
@@ -61,12 +71,15 @@ func (r *resolver) callfn(fn reflect.Value, callmap map[reflect.Value]bool) erro
 		ins[i] = val
 	}
 
+	// call the provider function to generate the provided values.
 	outs := fn.Call(ins)
 	for _, out := range outs {
+		// handle error returns
 		if iserr(out.Type()) && !out.IsNil() {
 			return out.Interface().(error)
 		}
 
+		// identify what provided object this might be (if any)
 		c := r.concrete(out.Type())
 		if c == nil {
 			continue
