@@ -79,6 +79,11 @@ func TestInit(t *testing.T) {
 	assert.Equal(t, []string{"INIT C", "INIT B: test", "INIT A"}, out)
 }
 
+func TestInit_InvalidArgs(t *testing.T) {
+	assert.EqualError(t, dinit.Init(1), "unsupported provider type: 1")
+	assert.EqualError(t, dinit.Init("x"), "unsupported provider type: x")
+}
+
 func TestInit_Error(t *testing.T) {
 	out = []string{}
 	err := dinit.Init(newB, c{""}, d{"test"})

@@ -37,9 +37,9 @@ func (r *resolver) init(vals []interface{}) error {
 
 // resolve inspects the list of concrete values and provider functions to
 // determine the dependency map of the initialization.
-func (r *resolver) resolve() error {
+func (r *resolver) resolve() {
 	r.buildTypeMap()
-	return r.fillValMap()
+	r.fillValMap()
 }
 
 // buildTypeMap collects all known type names from all concrete values, as well
@@ -73,7 +73,7 @@ func (r *resolver) addType(t reflect.Type) {
 
 // fillValMap fills the valmap with the remaining provider functions for the
 // matching types.
-func (r *resolver) fillValMap() error {
+func (r *resolver) fillValMap() {
 	for _, fn := range r.fns {
 		fnt := fn.Type()
 		for i := 0; i < fnt.NumOut(); i++ {
@@ -91,7 +91,6 @@ func (r *resolver) fillValMap() error {
 			r.valmap[name] = fn
 		}
 	}
-	return nil
 }
 
 // concrete determines the concrete name of a type. In other words, if the type

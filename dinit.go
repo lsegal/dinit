@@ -43,9 +43,7 @@ func Init(vals ...interface{}) error {
 	if err := r.init(vals); err != nil {
 		return err
 	}
-	if err := r.resolve(); err != nil {
-		return err
-	}
+	r.resolve()
 	for _, fn := range r.fns {
 		if err := r.validate(fn, nil); err != nil {
 			return err
